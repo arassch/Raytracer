@@ -119,28 +119,6 @@ void MainWindow::setNumBounceDirections(int numDirections)
 
 void MainWindow::setNumSubpixels(int num)
 {
-//    int pow2 = 0;
-//    int exponent = -1;
-
-//    // Find current exponent
-//    do
-//    {
-//        exponent++;
-//        pow2 = pow(2, exponent);
-//    } while(m_algorithm->getNumSubpixels() > pow2);
-
-
-//    if(m_algorithm->getNumSubpixels() < num)
-//    {
-//        exponent++;
-//        pow2 = pow(2,exponent);
-//    }
-//    else
-//    {
-//        exponent--;
-//        pow2 = pow(2,exponent);
-//    }
-//    ui->subpixels->setValue(pow2);
     m_algorithm->setNumSubpixels(num);
     restartRender();
 }
