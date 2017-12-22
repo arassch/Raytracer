@@ -14,6 +14,9 @@ RenderAlg::RenderAlg(Scene* scene) : m_scene(scene), pixels(0)
     unsigned resx = m_scene->getResX();
     unsigned resy = m_scene->getResY();
     pixels = (unsigned char*) malloc(resx*resy*3*sizeof(unsigned char));
+    m_colors.resize(resx);
+    for(int i=0;i<resx;++i)
+        m_colors[i].resize(resy);
     m_restart = false;
     m_drawNormals = false;
     m_drawAmbient = true;

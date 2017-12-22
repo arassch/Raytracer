@@ -141,12 +141,16 @@ void GlobalIllumination::process()
     unsigned resy = m_scene->getResY();
 
 
-    std::vector<Ray> rays = raysFromCamera();
+    std::vector<Ray> rays;
+
 
     int numPixels = resx*resy;
 
     do
     {
+        rays = raysFromCamera();
+        cout << "Number of rays: " << rays.size() << endl;
+
         m_restart = false;
         int percentage = 0;
         int numRaysProcessed = 0;
@@ -154,15 +158,17 @@ void GlobalIllumination::process()
         int numSubpixels = pow(m_subpixels, 2);
         memset(pixels, 0, resx*resy*3*sizeof(unsigned char));
 
-        #pragma omp parallel for
-        for (int r = 0; r < numPixels; ++r)
+        for(int s=0; s<numSubpixels; ++s)
         {
-            int i = floor(r / resx);
-            int j = r % resy;
 
-            Vector3 col = Vector3::ZERO;
-            for(int s=0; s<numSubpixels; ++s)
+            #pragma omp parallel for
+            for (int r = 0; r < numPixels; ++r)
             {
+                int i = floor(r / resx);
+                int j = r % resy;
+
+                Vector3 col = Vector3::ZERO;
+
 
                 if(m_restart)
                     continue;
@@ -190,7 +196,16 @@ void GlobalIllumination::process()
                 {
                     if(isLight)
                     {
-                        col += mat.diffuse*(1.0/(Scalar)numSubpixels);
+                        Vector3 colSample = mat.diffuse;
+
+                        if(s > 0)
+                            col = (m_colors[i][j]*s + colSample) * (1.0/(s+1));
+                        else
+                            col = colSample;
+                        m_colors[i][j] = col;
+                        pixels[(j*resx+i)*3+0] = (unsigned char) floor(col[0]*255.0);
+                        pixels[(j*resx+i)*3+1] = (unsigned char) floor(col[1]*255.0);
+                        pixels[(j*resx+i)*3+2] = (unsigned char) floor(col[2]*255.0);
                         continue;
                     }
 
@@ -209,9 +224,6 @@ void GlobalIllumination::process()
                         continue;
                     }
 
-    //                if(i == 14 && j == 254)
-    //                    cout << "here" << endl;
-
                     Vector3 colSample = getDirectIllumination(point, normal, mat);
 
                     if(m_drawIndirect)
@@ -221,17 +233,18 @@ void GlobalIllumination::process()
                     colSample[1] = max(min(colSample[1], 1.0), 0.0);
                     colSample[2] = max(min(colSample[2], 1.0), 0.0);
 
-                    col += colSample * (1.0/numSubpixels);
-
-//                    if(i == 16 && j == 84)
-//                        cout << col[0]*numSubpixels << endl;
-
+                    if(s > 0)
+                        col = (m_colors[i][j]*s + colSample) * (1.0/(s+1));
+                    else
+                        col = colSample;
 
                 }
+                m_colors[i][j] = col;
+                pixels[(j*resx+i)*3+0] = (unsigned char) floor(col[0]*255.0);
+                pixels[(j*resx+i)*3+1] = (unsigned char) floor(col[1]*255.0);
+                pixels[(j*resx+i)*3+2] = (unsigned char) floor(col[2]*255.0);
             }
-            pixels[(j*resx+i)*3+0] += (unsigned char) floor(col[0]*255.0);
-            pixels[(j*resx+i)*3+1] += (unsigned char) floor(col[1]*255.0);
-            pixels[(j*resx+i)*3+2] += (unsigned char) floor(col[2]*255.0);
+
         }
     } while(m_restart);
 

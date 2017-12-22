@@ -33,6 +33,7 @@ protected:
 
 public:
     unsigned char *pixels;
+    std::vector<std::vector<Vector3> > m_colors;
 
 	RenderAlg(Scene* scene);
 	virtual ~RenderAlg();
